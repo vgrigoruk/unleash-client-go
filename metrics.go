@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"runtime"
 	"sync"
 	"time"
 
@@ -24,6 +25,21 @@ type MetricsData struct {
 
 	// Bucket is the payload data sent to the server.
 	Bucket api.Bucket `json:"bucket"`
+
+	// The runtime version of our Platform
+	PlatformVersion string `json:"platformVersion"`
+
+	// The runtime name of our Platform
+	PlatformName string `json:"platformName"`
+
+	// Which version of Yggdrasil is being used
+	YggdrasilVersion *string `json:"yggdrasilVersion"`
+
+	// Optional field that describes the sdk version (name:version)
+	SDKVersion string `json:"sdkVersion"`
+
+	// Which version of the Unleash-Client-Spec is this SDK validated against
+	SpecVersion string `json:"specVersion"`
 }
 
 // ClientData represents the data sent to the unleash during registration.
@@ -46,6 +62,15 @@ type ClientData struct {
 	// Interval specifies the time interval (in ms) that the client is using for refreshing
 	// feature toggles.
 	Interval int64 `json:"interval"`
+
+	PlatformVersion string `json:"platformVersion"`
+
+	PlatformName string `json:"platformName"`
+
+	YggdrasilVersion *string `json:"yggdrasilVersion"`
+
+	// Which version of the Unleash-Client-Spec is this SDK validated against
+	SpecVersion string `json:"specVersion"`
 }
 
 type metric struct {
@@ -174,9 +199,14 @@ func (m *metrics) sendMetrics() {
 	}
 	bucket.Stop = time.Now()
 	payload := MetricsData{
-		AppName:    m.options.appName,
-		InstanceID: m.options.instanceId,
-		Bucket:     bucket,
+		AppName:          m.options.appName,
+		InstanceID:       m.options.instanceId,
+		Bucket:           bucket,
+		SDKVersion:       fmt.Sprintf("%s:%s", clientName, clientVersion),
+		PlatformName:     "go",
+		PlatformVersion:  runtime.Version(),
+		YggdrasilVersion: nil,
+		SpecVersion:      specVersion,
 	}
 
 	u, _ := m.options.url.Parse("./client/metrics")
@@ -305,5 +335,9 @@ func (m *metrics) getClientData() ClientData {
 		m.options.strategies,
 		m.started,
 		int64(m.options.metricsInterval.Seconds()),
+		runtime.Version(),
+		"go",
+		nil,
+		specVersion,
 	}
 }

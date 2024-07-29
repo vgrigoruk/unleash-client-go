@@ -3,13 +3,14 @@ package unleash
 import (
 	"bytes"
 	"encoding/json"
-	"gopkg.in/h2non/gock.v1"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/h2non/gock"
 
 	"github.com/Unleash/unleash-client-go/v4/api"
 	"github.com/stretchr/testify/assert"
@@ -129,20 +130,19 @@ func TestRepository_ParseAPIResponse(t *testing.T) {
 	assert.Equal(0, len(response.Segments))
 }
 
-
 func TestRepository_backs_off_on_http_statuses(t *testing.T) {
 	a := assert.New(t)
 	testCases := []struct {
 		statusCode int
 		errorCount float64
 	}{
-		{ 401, 10},
-		{ 403, 10},
-		{ 404, 10},
-		{ 429, 1},
-		{ 500, 1},
-		{ 502, 1},
-		{ 503, 1},
+		{401, 10},
+		{403, 10},
+		{404, 10},
+		{429, 1},
+		{500, 1},
+		{502, 1},
+		{503, 1},
 	}
 	defer gock.Off()
 	for _, tc := range testCases {
@@ -154,7 +154,7 @@ func TestRepository_backs_off_on_http_statuses(t *testing.T) {
 			WithAppName(mockAppName),
 			WithDisableMetrics(true),
 			WithInstanceId(mockInstanceId),
-			WithRefreshInterval(time.Millisecond * 15),
+			WithRefreshInterval(time.Millisecond*15),
 		)
 		a.Nil(err)
 		time.Sleep(20 * time.Millisecond)
@@ -167,8 +167,8 @@ func TestRepository_back_offs_are_gradually_reduced_on_success(t *testing.T) {
 	a := assert.New(t)
 	defer gock.Off()
 	gock.New(mockerServer).
-	    Get("/client/features").
-	    Times(4).
+		Get("/client/features").
+		Times(4).
 		Reply(429)
 	gock.New(mockerServer).
 		Get("/client/features").
@@ -179,7 +179,7 @@ func TestRepository_back_offs_are_gradually_reduced_on_success(t *testing.T) {
 		WithAppName(mockAppName),
 		WithDisableMetrics(true),
 		WithInstanceId(mockInstanceId),
-		WithRefreshInterval(time.Millisecond * 10),
+		WithRefreshInterval(time.Millisecond*10),
 	)
 	a.Nil(err)
 	client.WaitForReady()
